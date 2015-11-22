@@ -3,6 +3,7 @@ run_analysis<-function(){
     # Author: Jesus Javier Caballero
     # Last Modif.       : 20/11/2015
     # Name              : run_analysis
+    # Purpose           :
     #######
     
     # import packages
@@ -54,7 +55,8 @@ run_analysis<-function(){
     # merge training and test DATA 
     datosTable <- rbind(datosTrain, datosTest)
     
-    # rename variables according to feature label (V1 = "tBodyAcc-mean()-X")
+    # rename variables according to feature label (Ej. V1 is "tBodyAcc-mean()-X",
+    #   V2 is BodyAcc-mean()-Y, etc)
     datosFeatures <- read.table("UCI_Dataset/UCI HAR Dataset/features.txt")
     setnames(datosFeatures, names(datosFeatures), c("FeatureID", "FeatureNombre"))
     colnames(datosTable) <- datosFeatures$FeatureNombre
@@ -76,7 +78,7 @@ run_analysis<-function(){
     # combine variables for the mean and standard deviation and add  2 columns, "Sujeto","ActividadID"
     datosFeatureStat <- union(c("Sujeto","ActividadID"), datosFeatureStat)
     
-    # taken a subset containing only the variables for the mean and the std, plus "Sujeto", "ActividadID"
+    # subset containing only the variables for the mean and the std, plus "Sujeto", "ActividadID"
     datosTable<- subset(datosTable,select=datosFeatureStat)
     
     ################
@@ -85,10 +87,6 @@ run_analysis<-function(){
     
     # enter activity name ("ActividadNombre") into datosTable
     datosTable <- merge(actividadLabel, datosTable , by="ActividadID", all.x=TRUE)
-    
-    
-    # calculate mean of each variable for each activity and each subject
-    datosTable$ActividadNombre <- as.character(datosTable$ActividadNombre)
     
     #############
     ##4. Appropriately labels the data set with descriptive variable names.
@@ -101,15 +99,17 @@ run_analysis<-function(){
     # f             based on frequency
     # Body          Body measures
     # Mag           Magnitud of signal
+    # mean          Mean
+    # std           StdDev
     
-    names(datosTable)<-gsub("std()", "StdDev", names(datosTable))
-    names(datosTable)<-gsub("mean()", "Mean", names(datosTable))
-    names(datosTable)<-gsub("^t", "Time", names(datosTable))
-    names(datosTable)<-gsub("^f", "Frequency", names(datosTable))
     names(datosTable)<-gsub("Acc", "Accelerometer", names(datosTable))
     names(datosTable)<-gsub("Gyro", "Gyroscope", names(datosTable))
-    names(datosTable)<-gsub("Mag", "Magnitude", names(datosTable))
+    names(datosTable)<-gsub("^t", "Time", names(datosTable))
+    names(datosTable)<-gsub("^f", "Frequency", names(datosTable))
     names(datosTable)<-gsub("BodyBody", "Body", names(datosTable))
+    names(datosTable)<-gsub("Mag", "Magnitude", names(datosTable))
+    names(datosTable)<-gsub("std()", "StdDev", names(datosTable))
+    names(datosTable)<-gsub("mean()", "Mean", names(datosTable))
     
     ###################
     ##5. From the data set in step 4, creates a second, independent tidy data set with the average of
@@ -122,8 +122,10 @@ run_analysis<-function(){
     # calculate mean of each variable for each activity and each subject
     datosSummary<- aggregate(. ~ Sujeto - ActividadNombre, data = datosTable, mean) 
     
+    # order the data set by Sujeto, ActividadNombre
     datosTable<- tbl_df(arrange(datosSummary,Sujeto,ActividadNombre))
     
+    # write to text file
     write.table(datosTable, "tidy.txt", row.name=FALSE)
 
 }
